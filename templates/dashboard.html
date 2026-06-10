@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 text-center text-md-start d-md-flex justify-content-between align-items-center">
+        <h2>Panel de Control</h2>
+        <a href="{{ url_for('nuevo_parte') }}" class="btn btn-success btn-lg my-2">+ Nuevo Parte de Trabajo</a>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-body">
+        <h5 class="card-title mb-4">Historial de Partes</h5>
+
+        {% if not partes %}
+            <div class="text-center py-4">
+                <p class="text-muted fs-5">No hay partes de trabajo registrados todavía.</p>
+            </div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Total Factura</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for parte in partes %}
+                        <tr>
+                            <td>#{{ parte.id }}</td>
+                            <td>{{ parte.fecha.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ parte.cliente }}</td>
+                            <td><strong>{{ parte.total_factura }}€</strong></td>
+                            <td>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Ver / Imprimir</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

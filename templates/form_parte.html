@@ -3,66 +3,87 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-sm-12">
-        <div class="card shadow mb-4">
+        <div class="card shadow">
             <div class="card-header bg-success text-white">
-                <h4 class="mb-0">📋 Nuevo Parte de Trabajo Manual</h4>
+                <h4 class="mb-0">📋 Nuevo Parte de Trabajo Profesional</h4>
             </div>
             <div class="card-body p-4">
                 <form method="POST">
 
-                    <div class="mb-4">
-                        <label for="cliente" class="form-label fw-bold">Empresa / Cliente</label>
-                        <input type="text" class="form-control form-control-lg" id="cliente" name="cliente" placeholder="" required>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Cliente / Empresa</label>
+                        <select class="form-select form-select-lg" name="cliente_id" required>
+                            <option value="" disabled selected>Selecciona una empresa...</option>
+                            {% for c in clientes %}
+                            <option value="{{ c.id }}">{{ c.nombre }} (CIF: {{ c.cif }})</option>
+                            {% endfor %}
+                        </select>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="descripcion" class="form-label fw-bold">Descripción del Trabajo Realizado</label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" placeholder="Describe brevemente las tareas realizadas..." required></textarea>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Descripción del Trabajo</label>
+                        <textarea class="form-control" name="descripcion" rows="3" required></textarea>
                     </div>
 
-                    <hr class="my-4">
-                    <h5 class="text-muted mb-3">Imputación de Costes (Precios desde SQL)</h5>
-
-                    <div class="row">
-                        <div class="col-md-8 col-sm-12 mb-3">
-                            <label for="tipo_servicio" class="form-label fw-bold">Tipo de Servicio / Mano de Obra</label>
-                            <select class="form-select form-select-lg" id="tipo_servicio" name="tipo_servicio" required>
-                                <option value="" disabled selected>Selecciona tarifa...</option>
-                                {% for p in productos if 'Mano de Obra' in p.nombre %}
-                                <option value="{{ p.id }}">{{ p.nombre }} ({{ p.precio }}€/h)</option>
+                    <div class="row mb-4">
+                        <div class="col-8">
+                            <label class="form-label fw-bold">Tipo de Servicio</label>
+                            <select class="form-select" name="servicio_id" required>
+                                <option value="" disabled selected>Selecciona tipo...</option>
+                                {% for s in servicios %}
+                                <option value="{{ s.id }}">{{ s.nombre }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4 col-sm-12 mb-3">
-                            <label for="horas" class="form-label fw-bold">Horas Imputadas</label>
-                            <input type="number" class="form-control form-control-lg" id="horas" name="horas" min="0" step="0.5" value="0" required>
+                        <div class="col-4">
+                            <label class="form-label fw-bold">Horas</label>
+                            <input type="number" class="form-control" name="horas" min="0" step="0.5" value="0" required>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-8 col-sm-12 mb-3">
-                            <label for="material" class="form-label fw-bold">Material Utilizado</label>
-                            <select class="form-select form-select-lg" id="material" name="material" required>
-                                <option value="" disabled selected>Selecciona material...</option>
-                                {% for p in productos if 'Mano de Obra' not in p.nombre %}
-                                <option value="{{ p.id }}">{{ p.nombre }} ({{ p.precio }}€/ud)</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4 col-sm-12 mb-3">
-                            <label for="cantidad" class="form-label fw-bold">Cantidad</label>
-                            <input type="number" class="form-control form-control-lg" id="cantidad" name="cantidad" min="0" step="1" value="0" required>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-muted mb-0">Materiales Utilizados</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarMaterial()">+ Añadir otro material</button>
+                    </div>
+
+                    <div id="contenedor-materiales">
+                        <div class="row g-2 mb-2 fila-material">
+                            <div class="col-8">
+                                <select class="form-select" name="materiales[]">
+                                    <option value="" selected>Ninguno / Selecciona material...</option>
+                                    {% for m in materiales %}
+                                    <option value="{{ m.id }}">{{ m.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" name="cantidades[]" min="0" placeholder="Cant" value="0">
+                            </div>
                         </div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg me-md-2">Cancelar</a>
-                        <button type="submit" class="btn btn-success btn-lg">Generar Parte y Factura</button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-success">Guardar y Procesar en Factura</button>
                     </div>
-
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function agregarMaterial() {
+    const contenedor = document.getElementById('contenedor-materiales');
+    const primeraFila = document.querySelector('.fila-material');
+    const nuevaFila = primeraFila.cloneNode(true);
+
+    // Reseteamos los valores de la nueva fila clonada
+    nuevaFila.querySelector('select').value = "";
+    nuevaFila.querySelector('input').value = "0";
+
+    contenedor.appendChild(nuevaFila);
+}
+</script>
 {% endblock %}

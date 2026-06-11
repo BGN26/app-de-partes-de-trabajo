@@ -6,5 +6,5 @@ services:
     env_file:
       - .env
     volumes:
-      - ./uploads:/app/uploads #
+      - ./:/app
     restart: always

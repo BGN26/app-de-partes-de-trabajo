@@ -1,0 +1,31 @@
+name: Flask CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.14"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flask flask-sqlalchemy flask-login thefuzz fpdf2 google-generativeai python-levenshtein python-dotenv pillow opencv-python-headless numpy
+
+    - name: Lint with flake8 (Ejemplo de test)
+      run: |
+        pip install flake8
+        # detiene el build si hay errores de sintaxis de Python
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics

@@ -41,6 +41,11 @@
                             <td>
                                 <a href="{{ url_for('ver_parte', id=parte.id) }}" class="btn btn-sm btn-info text-white">🔍 Ver Detalle</a>
                                 <a href="{{ url_for('generar_pdf', id=parte.id) }}" target="_blank" class="btn btn-sm btn-outline-danger">📕 PDF</a>
+                                <a href="{{ url_for('editar_parte', id=parte.id) }}" class="btn btn-sm btn-warning text-white">✏️ Editar</a>
+
+                                <form action="{{ url_for('borrar_parte', id=parte.id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este parte? Se restaurará el stock.');" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">✖ Borrar</button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}

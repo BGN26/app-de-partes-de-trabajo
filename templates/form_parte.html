@@ -16,8 +16,15 @@
     <div class="container py-4">
         
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>📝 Nuevo Parte</h2>
+            <h2>{% if parte %}📝 Editar Parte de Trabajo #{{ parte.id }}{% else %}📝 Nuevo Parte{% endif %}</h2>
             <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+
+        <div class="card shadow-sm">
+             <div class="card-body">
+                <form method="POST" action="{% if parte %}{{ url_for('editar_parte', id=parte.id) }}{% else %}{{ url_for('nuevo_parte') }}{% endif %}">
+                </form>
+             </div>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}

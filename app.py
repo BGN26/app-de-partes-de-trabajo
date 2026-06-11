@@ -488,6 +488,93 @@ def generar_pdf(id):
     return response
 
 
+@app.route("/parte/borrar/<int:id>", methods=["POST"])
+@login_required
+def borrar_parte(id):
+    parte = ParteTrabajo.query.get_or_404(id)
+
+    materiales_asociados = ParteMaterial.query.filter_by(parte_id=id).all()
+    for item in materiales_asociados:
+        prod = Producto.query.get(item.producto_id)
+        if prod:
+            prod.unidades_disponibles += item.cantidad
+        db.session.delete(item)
+
+    db.session.delete(parte)
+    db.session.commit()
+
+    flash("Parte de trabajo eliminado correctamente y stock restaurado.", "success")
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/parte/editar/<int:id>", methods=["GET", "POST"])
+@login_required
+def editar_parte(id):
+    parte = ParteTrabajo.query.get_or_404(id)
+    clientes = Cliente.query.all()
+    servicios = Producto.query.filter_by(es_servicio=True).all()
+    materiales = Producto.query.filter_by(es_servicio=False).all()
+
+    materiales_actuales = ParteMaterial.query.filter_by(parte_id=id).all()
+
+    if request.method == "POST":
+        for item in materiales_actuales:
+            prod = Producto.query.get(item.producto_id)
+            if prod:
+                prod.unidades_disponibles += item.cantidad
+            db.session.delete(item)
+
+        db.session.flush()
+
+        parte.cliente_id = request.form.get("cliente_id")
+        parte.servicio_id = request.form.get("servicio_id")
+        parte.horas = float(request.form.get("horas", 0))
+        parte.descripcion = request.form.get("descripcion")
+
+        nuevos_materiales = request.form.getlist("materiales[]")
+        nuevas_cantidades = request.form.getlist("cantidades[]")
+
+        servicio = Producto.query.get(parte.servicio_id)
+        total_calculado = (servicio.precio_venta * parte.horas) if servicio else 0.0
+
+        for mat_id, cant in zip(nuevos_materiales, nuevas_cantidades):
+            if mat_id and cant:
+                cantidad = int(cant)
+                if cantidad > 0:
+                    mat = Producto.query.get(mat_id)
+                    if mat:
+                        total_calculado += mat.precio_venta * cantidad
+                        nuevo_enlace = ParteMaterial(
+                            parte_id=parte.id, producto_id=mat_id, cantidad=cantidad
+                        )
+                        db.session.add(nuevo_enlace)
+                        mat.unidades_disponibles -= cantidad
+
+        parte.total_factura = round(total_calculado, 2)
+        db.session.commit()
+
+        flash("Parte de trabajo actualizado con éxito.", "success")
+        return redirect(url_for("dashboard"))
+
+    materiales_viejos_lista = []
+    for item in materiales_actuales:
+        materiales_viejos_lista.append(
+            {"id": item.producto_id, "cantidad": item.cantidad}
+        )
+
+    return render_template(
+        "form_parte.html",
+        parte=parte,  # Pasamos el objeto del parte para saber que estamos EDITANDO
+        clientes=clientes,
+        servicios=servicios,
+        materiales=materiales,
+        texto_ocr=parte.descripcion,
+        cliente_detectado_id=parte.cliente_id,
+        servicio_detectado_id=parte.servicio_id,
+        materiales_detectados_json=json.dumps(materiales_viejos_lista),
+    )
+
+
 if __name__ == "__main__":
     crear_datos_prueba()
     app.run(host="0.0.0.0", port=5000, debug=True)

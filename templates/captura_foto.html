@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6 col-sm-12 text-center">
+        <div class="card shadow p-5">
+            <h3 class="mb-4">📷 Escanear Parte Físico</h3>
+            <p class="text-muted mb-4">Haz una foto al documento. La imagen se comprimirá automáticamente para un envío ultrarrápido y la IA extraerá el texto.</p>
+
+            <input type="file" id="foto-input" class="d-none" accept="image/*" capture="environment">
+
+            <label for="foto-input" class="btn btn-primary btn-lg w-100 py-3 shadow" id="btn-camara">
+                Abrir Cámara
+            </label>
+
+            <div id="cargando" class="mt-4 d-none">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-primary fw-bold">Comprimiendo y procesando con IA...</p>
+            </div>
+
+            <a href="{{ url_for('dashboard') }}" class="btn btn-link mt-3">Volver al inicio</a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('foto-input').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // 1. Mostrar pantalla de carga y ocultar botón
+    document.getElementById('btn-camara').classList.add('d-none');
+    document.getElementById('cargando').classList.remove('d-none');
+
+    // 2. Leer la imagen en el navegador
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // 3. Crear un Canvas para redimensionar (Max 1200px de ancho)
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            let scaleSize = 1;
+
+            if (img.width > MAX_WIDTH) {
+                scaleSize = MAX_WIDTH / img.width;
+            }
+
+            canvas.width = img.width * scaleSize;
+            canvas.height = img.height * scaleSize;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // 4. Comprimir a JPEG (Calidad 70%) y enviar vía Fetch (AJAX)
+            canvas.toBlob(function(blob) {
+                const formData = new FormData();
+                formData.append('foto', blob, 'foto_optimizada.jpg');
+
+                fetch('{{ url_for("ocr_camara") }}', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    // Como Flask devuelve un render_template con el nuevo HTML, sobreescribimos la pantalla
+                    return response.text().then(html => {
+                        document.open();
+                        document.write(html);
+                        document.close();
+                    });
+                }).catch(error => {
+                    alert("Error en la conexión. Revisa ngrok.");
+                    window.location.reload();
+                });
+            }, 'image/jpeg', 0.7);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}
